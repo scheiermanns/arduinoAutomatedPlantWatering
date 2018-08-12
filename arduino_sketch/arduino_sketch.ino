@@ -1,38 +1,32 @@
-/** defines
-*/
+/* pump state application enum */
 typedef enum pumptStateType{
-  pumpTurnOn=1,
-  pumpOn,
-  pumpTurnOff,
+  pumpOn=1,
   pumpOff
 }pumpState_te;
 
-// constants won't change. Used here to set a pin number :
+/* GPIO defintion for pump and led */
 const int ledPin =  LED_BUILTIN;// the number of the LED pin
 const int pumpRelaisPin =  12;// the number of the LED pin
 
-/** APPLICATION CONFIGURATION*/
+/* APPLICATION CONFIGURATION*/
 const unsigned long LED_INTERVAL = 500;           // interval at which to blink (milliseconds)
-const unsigned long WATERING_INTERVAL = 60000;           // interval at which to blink (milliseconds)
-const unsigned long WATERING_TIME = 60000;           // interval at which to blink (milliseconds)
+const unsigned long WATERING_INTERVAL = 300000; // interval at which to blink (milliseconds)
+const unsigned long WATERING_TIME = 45000;        // interval at which to blink (milliseconds)
 
-
-// Variables will change :
+/* pump states */
 int ledState = LOW;             // ledState used to set the LED
 pumpState_te pumpState = pumpOff;
+bool printMessage = true;
 
-// Generally, you should use "unsigned long" for variables that hold time
-// The value will quickly become too large for an int to store
+/* timing varaibles */
 unsigned long previousMillisLed = 0;                // will store last time LED was updated
-unsigned long previousMillisPumpRelais = 0;        // will store last time LED was updated
-
+unsigned long previousMillisWateringInterval = 0;        // will store last time watering has been taken
 
 /** ----------- SETUP -----------------*/
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   delay(2500);
-
 
   Serial.println("---------- Watering Application -------------");  
   // set the digital pin as output:
@@ -42,12 +36,12 @@ void setup() {
   digitalWrite(pumpRelaisPin, LOW);
   Serial.println("[INFO] Initialization done ...");
 
-  pumpState = pumpTurnOn;
+  pumpState = pumpOn;
   pumpControl(pumpState);
-  delay(10000);
-  pumpState = pumpTurnOff;
+  delay(WATERING_TIME);
+  pumpState = pumpOff;
   pumpControl(pumpState);
-  previousMillisPumpRelais = millis();
+  previousMillisWateringInterval = millis();
 }
 
 
@@ -70,59 +64,51 @@ void loop() {
   }
 
   // check to turn on RELAIS
-  if (currentMillis - previousMillisPumpRelais >= WATERING_INTERVAL) {
+  if (currentMillis - previousMillisWateringInterval >= WATERING_INTERVAL) {
 
-    if (pumpState == pumpOff){
-      // turn on
-      pumpState = pumpTurnOn;
-    }    
-    
-    if ((currentMillis - (previousMillisPumpRelais + WATERING_INTERVAL))>=WATERING_TIME){
+    pumpState = pumpOn;    
+    if ((currentMillis - (previousMillisWateringInterval + WATERING_INTERVAL))>=WATERING_TIME){
       // turn off pump  
-      previousMillisPumpRelais = currentMillis;
-      pumpState = pumpTurnOff;
+      previousMillisWateringInterval = currentMillis;
+      pumpState = pumpOff;
     }
     // set pump state
     pumpControl(pumpState);
   }
-
 }
 
-
+// pumpControl - control the pump pin according to state
 void pumpControl(pumpState_te pumpStateIn){
-  long hours;
-  long minutes;
-  long seconds;
-  // check
+    // check
     switch(pumpStateIn){
-        case pumpTurnOn:
-          pumpState = pumpOn;
-          Serial.print("[INFO]: start watering, turn on pump, at time = ");
-          Serial.print(" Days: " + String(millis()%86400000));
-          Serial.print(" Hours: " + String(millis()%3600000));
-          Serial.print(" Minutes: " + String(millis()%60000));
-          Serial.print(" Seconds: " + String(millis()%1000));
-          Serial.print("\n");
         case pumpOn:          
           digitalWrite(pumpRelaisPin, HIGH);
           pumpState = pumpOn;
+          if (printMessage==true){
+            Serial.print("[INFO]: start watering, turn on pump, at time = ");
+            Serial.print(" Days: " + String(millis()/86400000));
+            Serial.print(" Hours: " + String(millis()/3600000));
+            Serial.print(" Minutes: " + String(millis()/60000));
+            Serial.print(" Seconds: " + String(millis()/1000));
+            Serial.print("\n");
+            printMessage=false;
+          }        
           break;
-        
-        case pumpTurnOff:
-          pumpState = pumpOff;
         case pumpOff:
           digitalWrite(pumpRelaisPin, LOW);
           Serial.print("[INFO]: stop watering, turn off pump, at time = ");
-          Serial.print(" Days: " + String(millis()%86400000));
-          Serial.print(" Hours: " + String(millis()%86400000%3600000));
-          Serial.print(" Minutes: " + String(millis()%86400000%3600000%60000));
-          Serial.print(" Seconds: " + String(millis()%86400000%3600000%60000%1000));
+          Serial.print(" Days: " + String(millis()/86400000));
+          Serial.print(" Hours: " + String(millis()/3600000));
+          Serial.print(" Minutes: " + String(millis()/60000));
+          Serial.print(" Seconds: " + String(millis()/1000));
           Serial.print("\n");
           pumpState = pumpOff;
+          printMessage = true;
           break;
         
         default:
           pumpState = pumpOff;
+          printMessage = true;
           Serial.println("[ERROR]:pump unknown state...");
           break;   
       }
