@@ -1,5 +1,5 @@
-# arduinoAutomatedWateringExample
-automated plants watering with arduino uno. Configurable timer for watering and watering interval.
+# Introduction
+Automated plants watering with arduino.
 
 ## Hardware
 * arduino uno
