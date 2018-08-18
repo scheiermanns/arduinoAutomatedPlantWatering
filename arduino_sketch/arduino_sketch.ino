@@ -10,7 +10,7 @@ const int pumpRelaisPin =  12;// the number of the LED pin
 
 /* APPLICATION CONFIGURATION*/
 const unsigned long LED_INTERVAL = 500;           // interval at which to blink (milliseconds)
-const unsigned long WATERING_INTERVAL = 300000; // interval at which to blink (milliseconds)
+const unsigned long WATERING_INTERVAL = 24*60*60*1000; // interval at which to blink (milliseconds)
 const unsigned long WATERING_TIME = 45000;        // interval at which to blink (milliseconds)
 
 /* pump states */
